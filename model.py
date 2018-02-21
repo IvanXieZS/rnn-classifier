@@ -24,7 +24,6 @@ class Encoder(nn.Module):
 
   def reset_parameters(self):
     for name, weight in self.named_parameters():
-      print(name)
       if 'bias' not in name:
         if 'hh' in name:
           orthogonal(weight.data)
