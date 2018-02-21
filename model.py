@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+from torch.nn.init import xavier_uniform, orthogonal
 
 RNNS = ['LSTM', 'GRU']
 
@@ -14,15 +15,28 @@ class Encoder(nn.Module):
     rnn_cell = getattr(nn, rnn_type) # fetch constructor from torch.nn, cleaner than if
     self.rnn = rnn_cell(embedding_dim, hidden_dim, nlayers, 
                         dropout=dropout, bidirectional=bidirectional)
+    self.reset_parameters()
+
 
   def forward(self, input, hidden=None):
     return self.rnn(input, hidden)
+  
+
+  def reset_parameters(self):
+    for name, weight in self.named_parameters():
+      print(name)
+      if 'bias' not in name:
+        if 'hh' in name:
+          orthogonal(weight.data)
+        else:
+          xavier_uniform(weight.data)
 
 
 class Attention(nn.Module):
   def __init__(self, query_dim, key_dim, value_dim):
     super(Attention, self).__init__()
     self.scale = 1. / math.sqrt(query_dim)
+
 
   def forward(self, query, keys, values):
     # Query = [BxQ]
@@ -47,7 +61,9 @@ class Classifier(nn.Module):
     self.embedding = embedding
     self.encoder = encoder
     self.attention = attention
+
     self.decoder = nn.Linear(hidden_dim, num_classes)
+    xavier_uniform(self.decoder.weight.data)
 
     size = 0
     for p in self.parameters():
