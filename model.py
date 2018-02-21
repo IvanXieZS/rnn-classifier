@@ -29,6 +29,8 @@ class Encoder(nn.Module):
           orthogonal(weight.data)
         else:
           xavier_uniform(weight.data)
+      else:
+        weight.data.zero_()
 
 
 class Attention(nn.Module):
