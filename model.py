@@ -20,7 +20,7 @@ class Encoder(nn.Module):
 
   def forward(self, input, hidden=None):
     return self.rnn(input, hidden)
-  
+
 
   def reset_parameters(self):
     for name, weight in self.named_parameters():
@@ -60,9 +60,7 @@ class Classifier(nn.Module):
     self.embedding = embedding
     self.encoder = encoder
     self.attention = attention
-
     self.decoder = nn.Linear(hidden_dim, num_classes)
-    xavier_uniform(self.decoder.weight.data)
 
     size = 0
     for p in self.parameters():
