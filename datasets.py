@@ -3,7 +3,7 @@ from torchtext import datasets
 
 
 def make_sst(batch_size, device=-1, fine_grained=False, vectors=None):
-  TEXT = data.Field(include_lengths=True, lower=True)
+  TEXT = data.Field(include_lengths=True, lower=True, tokenize='spacy')
   LABEL = data.LabelField()
   filter_pred = lambda ex: ex.label != 'neutral' if not fine_grained else lambda ex: True
   train, val, test = datasets.SST.splits(TEXT, LABEL, 

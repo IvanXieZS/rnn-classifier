@@ -37,6 +37,8 @@ def make_parser():
                     help='[DONT] use CUDA')
   parser.add_argument('--fine', action='store_true', 
                     help='use fine grained labels in SST')
+  parser.add_argument('--fp16', action='store_true',
+                    help='use half precision training')
   return parser
 
 
@@ -73,7 +75,8 @@ def train(model, data, optimizer, criterion, args):
     loss = criterion(logits.view(-1, args.nlabels), y)
     total_loss += float(loss)
     accuracy, confusion_matrix = update_stats(accuracy, confusion_matrix, logits, y)
-    loss.backward()
+    with args.amp_handle.scale_loss(loss, optimizer) as scaled_loss:
+      loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
     optimizer.step()
 
@@ -131,6 +134,14 @@ def main():
   cuda = torch.cuda.is_available() and args.cuda
   device = torch.device("cpu") if not cuda else torch.device("cuda:0")
   seed_everything(seed=1337, cuda=cuda)
+  
+  try:
+    from apex import amp
+    amp_handle = amp.init(args.fp16)
+    args.amp_handle = amp_handle
+  except ImportError:
+    raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+
   vectors = load_pretrained_vectors(args.emsize)
 
   # Load dataset iterators
@@ -158,6 +169,8 @@ def main():
   attention = Attention(attention_dim, attention_dim, attention_dim)
 
   model = Classifier(embedding, encoder, attention, attention_dim, nlabels)
+  if args.fp16:
+    model.half()
   model.to(device)
 
   criterion = nn.CrossEntropyLoss()
