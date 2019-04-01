@@ -169,8 +169,6 @@ def main():
   attention = Attention(attention_dim, attention_dim, attention_dim)
 
   model = Classifier(embedding, encoder, attention, attention_dim, nlabels)
-  if args.fp16:
-    model.half()
   model.to(device)
 
   criterion = nn.CrossEntropyLoss()
